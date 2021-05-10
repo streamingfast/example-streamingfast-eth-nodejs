@@ -1,4 +1,4 @@
-## dfuse Firehose Node.js (JavaScript) Example
+## StreamingFast Node.js (JavaScript) Example
 
 This simple program demonstrates how easy it is to stream full block details using StreamingFast gRPC
 API:
