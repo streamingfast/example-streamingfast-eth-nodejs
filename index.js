@@ -20,24 +20,23 @@ const ethBlockMsg = ethProto.root.lookupType("dfuse.ethereum.codec.v1.Block")
 const blockDetailsFull = blockDetailsEnum.values["BLOCK_DETAILS_FULL"]
 
 async function main() {
-  if (process.argv.length <= 2) {
+  if (process.argv.length <= 3) {
     console.error("Error: Wrong number of arguments")
     console.error()
-    console.error("usage: node index.js <apiKey> [--full]")
+    console.error("usage: node index.js <endpoint> <apiKey> [--full]")
     process.exit(1)
   }
 
+  const endpoint = process.argv[2].replace(/:[0-9]+$/, "")
+  const apiKey = process.argv[3]
+
   const dfuse = createDfuseClient({
-    apiKey: process.argv[2],
-    network: "api.streamingfast.io",
+    apiKey,
+    network: endpoint.replace(/:[0-9]+$/, ""),
   })
 
-  const client = new bstreamService.BlockStreamV2(
-    "api.streamingfast.io:443",
-    grpc.credentials.createSsl()
-  )
-
-  const showFull = process.argv.length > 3 && process.argv[3] == "--full"
+  const client = new bstreamService.BlockStreamV2(endpoint, grpc.credentials.createSsl())
+  const showFull = process.argv.length > 4 && process.argv[4] == "--full"
 
   try {
     await new Promise(async (resolve, reject) => {
