@@ -15,9 +15,9 @@ You will need to have Node.js 10+ as well as Yarn or NPM.
 
 #### Quickstart
 
-First of all, visit [https://app.dfuse.io/](https://app.dfuse.io/) to get a free API key for your project.
+First of all, visit [https://streamingfast.io/](https://streamingfast.io/) and click `Start Streaming` button on the top-right of the webpage to get a free API key for your project.
 
-First, clone this repository to your work folder:
+Then, clone this repository to your work folder:
 
 ```bash
 git clone https://github.com/streamingfast/example-streamingfast-eth-nodejs.git
