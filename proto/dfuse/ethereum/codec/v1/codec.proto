@@ -17,6 +17,27 @@ message Block {
   repeated TransactionTrace transaction_traces = 10;
   repeated BalanceChange balance_changes = 11;
   repeated CodeChange code_changes = 20;
+
+  // Wheter or not a filtering process was run on this block. The filtering process populated the
+  // `transaction_traces` according to the `filtering_include_filter_expr` and
+  // `filtering_exclude_filter_expr` CEL expressions. A transaction will be present in the `transaction_traces`
+  // array if it matched the `filtering_include_filter_expr` and did *NOT* match the `filtering_exclude_filter_expr`.
+  //
+  // Moreover, each matching call that brought the transaction to be in `transaction_traces`
+  // array will have a `filtering_matched` flag set on it to broadcast the fact that this call
+  // match the inclusion/exclusion list.
+  //
+  // This flag controls all `transaction_traces` elements on the Block structure and on
+  // substructures if present.
+  bool filtering_applied = 40;
+
+  // The CEL filter expression used to include transaction in `transaction_traces` array, works
+  // in combination with `filtering_exclude_filter_expr` value.
+  string filtering_include_filter_expr = 41;
+
+  // The CEL filter expression used to exclude transaction in `transaction_traces` array, works
+  // in combination with `filtering_include_filter_expr` value.
+  string filtering_exclude_filter_expr = 42;
 }
 
 // BlockWithRefs is a lightweight block, with traces and transactions
@@ -164,6 +185,10 @@ message TransactionReceipt {
                          * PostState + root + PostStateOrStatus,
                          * parity: status_code, root... this piles
                          * hardforks, see (read the EIPs first):
+                         * https://github.com/eoscanada/go-ethereum-private/blob/deep-mind/core/types/receipt.go#L147
+                         * and
+                         * https://github.com/eoscanada/go-ethereum-private/blob/deep-mind/core/types/receipt.go#L50-L86
+                         * and
                          * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-658.md
                          * and the notion of Outcome in parity, which
                          * segregates the two concepts, which are
@@ -255,6 +280,11 @@ message Call {
 
   repeated ERC20BalanceChange erc20_balance_changes = 50;
   repeated ERC20TransferEvent erc20_transfer_events = 51;
+
+  // Whether this call trace was a successful match, present only when filtering was applied on block. This
+  // will be `true` if the Block `filtering_applied` is `true`, if the include CEL filter matched and
+  // if the exclude CEL filter did NOT match.
+  bool filtering_matched = 60;
 }
 
 message ERC20BalanceChange {
@@ -304,6 +334,7 @@ message BalanceChange {
     REASON_GENESIS_BALANCE = 6;
     REASON_GAS_BUY = 7;
     REASON_REWARD_TRANSACTION_FEE = 8;
+    REASON_REWARD_FEE_RESET = 14;
     REASON_GAS_REFUND = 9;
     REASON_TOUCH_ACCOUNT = 10;
     REASON_SUICIDE_REFUND = 11;

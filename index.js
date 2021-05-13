@@ -17,6 +17,7 @@ const blockMsg = bstreamProto.root.lookupType("dfuse.bstream.v1.Block")
 const blockDetailsEnum = bstreamProto.root.lookupEnum("dfuse.bstream.v1.BlockDetails")
 const ethBlockMsg = ethProto.root.lookupType("dfuse.ethereum.codec.v1.Block")
 
+const blockDetailsLight = blockDetailsEnum.values["BLOCK_DETAILS_LIGHT"]
 const blockDetailsFull = blockDetailsEnum.values["BLOCK_DETAILS_FULL"]
 
 async function main() {
@@ -27,7 +28,7 @@ async function main() {
     process.exit(1)
   }
 
-  const endpoint = process.argv[2].replace(/:[0-9]+$/, "")
+  const endpoint = process.argv[2]
   const apiKey = process.argv[3]
 
   const dfuse = createDfuseClient({
@@ -48,10 +49,10 @@ async function main() {
 
         stream = client.Blocks(
           {
-            start_block_num: 12000000,
-            stop_block_num: 12000005,
+            start_block_num: 12400000,
+            stop_block_num: 12400005,
             details: blockDetailsFull,
-            include_filter_expr: "from == '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'",
+            include_filter_expr: "to == '0xE592427A0AEce92De3Edee1F18E0157C05861564'",
           },
           metadata
         )
@@ -81,23 +82,29 @@ async function main() {
           const transactionCount = block.transactionTraces.length
 
           let callCount = 0
+          let matchingCallCount = 0
+
           block.transactionTraces.forEach((trace) => {
-            // For now you get all calls, even those that did not matched the expression. We are going to
-            // fix that by providing a flag that will determine if the call actually matched or not, so you
-            // can act on it.
             trace.calls.forEach((call) => {
               // Call represents all internal calls of the transaction, the `call.index` with value `1` is the
               // "root" call which has the same input as the transaction.
               //
               // @see https://github.com/dfuse-io/proto-ethereum/blob/develop/dfuse/ethereum/codec/v1/codec.proto#L196
               callCount += 1
+
+              // If the call's field `filteringMatched` is `true`, it means this call matched the filter
+              // you used to request the blocks. You can use that to inspect the specific calls that matched
+              // your filter.
+              if (call.filteringMatched) {
+                matchingCallCount += 1
+              }
             })
           })
 
           console.log(
             `Block #${block.number} (${block.hash.toString(
               "hex"
-            )}) - ${transactionCount} Transactions, ${callCount} Calls`
+            )}) - ${transactionCount} Matching Transactions, ${callCount} Calls (${matchingCallCount} matching filter)`
           )
           if (showFull) {
             console.log(JSON.stringify(block, null, "  "))
